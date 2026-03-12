@@ -1,0 +1,12 @@
+RewriteEngine On
+
+# Handle Authorization Header
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+
+# Don't rewrite files or directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Rewrite all requests to api folder
+RewriteRule ^api/(.*)$ api/$1 [L,QSA]
