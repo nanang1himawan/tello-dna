@@ -63,7 +63,7 @@ sudo apt install -y nodejs
    Navigate to the repository root and import the initial schema file into MySQL:
    ```bash
    cd backend/database
-   mysql -u root -p office_app < schema.sql
+   mysql -u root -p office_app < office_app.sql
    ```
 
 **Configure Database Connection (Optional)**:
