@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -25,6 +25,15 @@ export default function Calendar() {
     const calendarRef = useRef(null);
     const { user } = useAuth();
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [dateRange, setDateRange] = useState(() => {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return {
+            start: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`,
+            end: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`,
+        };
+    });
     const [selectedProject, setSelectedProject] = useState('');
     const [myTasksOnly, setMyTasksOnly] = useState(false);
     const [viewMode, setViewMode] = useState('plan'); // 'plan' or 'actual'
@@ -37,15 +46,13 @@ export default function Calendar() {
     });
     const projects = projectsData?.data?.data || [];
 
-    // Fetch calendar events
-    const { data: eventsData, isLoading } = useQuery({
-        queryKey: ['calendar-events', currentDate.toISOString().slice(0, 7), selectedProject, myTasksOnly, viewMode],
+    // Fetch calendar events - use dateRange (synced from FullCalendar) as query key
+    const { data: eventsData, isLoading, isFetching } = useQuery({
+        queryKey: ['calendar-events', dateRange.start, dateRange.end, selectedProject, myTasksOnly, viewMode],
         queryFn: () => {
-            const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-            const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
             const params = new URLSearchParams({
-                start: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`,
-                end: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`,
+                start: dateRange.start,
+                end: dateRange.end,
                 my_tasks: myTasksOnly.toString(),
                 view: viewMode,
             });
@@ -56,6 +63,7 @@ export default function Calendar() {
                 { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } }
             ).then(res => res.json());
         },
+        keepPreviousData: true, // Keep showing old events while fetching new ones
     });
 
     const events = eventsData?.data || [];
@@ -98,22 +106,34 @@ export default function Calendar() {
         });
     };
 
+    // Sync date state from FullCalendar's own navigation
+    const handleDatesSet = useCallback((dateInfo) => {
+        setCurrentDate(dateInfo.view.currentStart);
+        const start = dateInfo.start;
+        const end = dateInfo.end;
+        const newRange = {
+            start: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`,
+            end: `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`,
+        };
+        setDateRange(prev => {
+            if (prev.start === newRange.start && prev.end === newRange.end) return prev;
+            return newRange;
+        });
+    }, []);
+
     const goToToday = () => {
         const calendarApi = calendarRef.current?.getApi();
         calendarApi?.today();
-        setCurrentDate(new Date());
     };
 
     const goToPrev = () => {
         const calendarApi = calendarRef.current?.getApi();
         calendarApi?.prev();
-        setCurrentDate(calendarApi?.getDate());
     };
 
     const goToNext = () => {
         const calendarApi = calendarRef.current?.getApi();
         calendarApi?.next();
-        setCurrentDate(calendarApi?.getDate());
     };
 
     return (
@@ -227,31 +247,31 @@ export default function Calendar() {
                 <span className="text-text-muted">• {events.length} task</span>
             </div>
 
-            {/* Calendar */}
-            <div className="glass rounded-xl p-4 calendar-container">
-                {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
+            {/* Calendar - always mounted, overlay loader on fetch */}
+            <div className="glass rounded-xl p-4 calendar-container relative">
+                {isFetching && (
+                    <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-xl">
                         <Loader2 className="w-8 h-8 text-primary animate-spin" />
                     </div>
-                ) : (
-                    <FullCalendar
-                        ref={calendarRef}
-                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-                        initialView="dayGridMonth"
-                        headerToolbar={false}
-                        events={events}
-                        editable={viewMode === 'plan'} // Only allow drag in plan view
-                        droppable={viewMode === 'plan'}
-                        eventDrop={handleEventDrop}
-                        eventClick={handleEventClick}
-                        height="auto"
-                        locale="id"
-                        firstDay={1}
-                        eventDisplay="block"
-                        dayMaxEventRows={3}
-                        moreLinkContent={(args) => `+${args.num} lainnya`}
-                    />
                 )}
+                <FullCalendar
+                    ref={calendarRef}
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+                    initialView="dayGridMonth"
+                    headerToolbar={false}
+                    events={events}
+                    editable={viewMode === 'plan'}
+                    droppable={viewMode === 'plan'}
+                    eventDrop={handleEventDrop}
+                    eventClick={handleEventClick}
+                    datesSet={handleDatesSet}
+                    height="auto"
+                    locale="id"
+                    firstDay={1}
+                    eventDisplay="block"
+                    dayMaxEventRows={3}
+                    moreLinkContent={(args) => `+${args.num} lainnya`}
+                />
             </div>
 
             {/* Event Detail Modal */}
