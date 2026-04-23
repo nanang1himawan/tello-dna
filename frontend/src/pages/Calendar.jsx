@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
-import { tasksApi, projectsApi } from '../lib/api';
+import api, { tasksApi, projectsApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import {
     Calendar as CalendarIcon,
@@ -51,10 +51,7 @@ export default function Calendar() {
             });
             if (selectedProject) params.append('project_id', selectedProject);
 
-            return fetch(
-                `${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api/tasks/calendar.php?${params}`,
-                { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } }
-            ).then(res => res.json());
+            return api.get('/api/tasks/calendar.php', { params }).then(res => res.data);
         },
     });
 

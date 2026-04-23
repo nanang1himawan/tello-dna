@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { tasksApi, usersApi, commentsApi, attachmentsApi, labelsApi } from '../lib/api';
+import { tasksApi, usersApi, commentsApi, attachmentsApi, labelsApi, API_URL } from '../lib/api';
 import ConfirmModal from './ConfirmModal';
 import { WatchButton } from './MembersDropdown';
 import VoteButton from './VoteButton';
@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { cn, formatDate, getInitials, getSeverityColor, formatDateTime, getTimeAgo, formatMarkdown } from '../lib/utils';
 
-const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api`;
+const API_BASE = `${API_URL}/api`;
 
 const typeConfig = {
     epic: { emoji: '⚡', color: 'bg-purple-500/20 text-purple-400 border-purple-500/50', label: 'Epic' },
@@ -134,22 +134,10 @@ export default function TaskModal({ task, columnId, boardId, currentUser, onClos
 
             // Upload new attachment if exists
             if (editCommentAttachment) {
-                const formData = new FormData();
-                formData.append('file', editCommentAttachment);
-                formData.append('task_id', task.id);
-
-                const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api/attachments/upload.php`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    },
-                    body: formData
-                });
-
-                const uploadData = await uploadRes.json();
-                if (uploadRes.ok && uploadData.data) {
-                    attachmentName = uploadData.data.original_name || editCommentAttachment.name;
-                    attachmentPath = uploadData.data.file_path;
+                const uploadRes = await attachmentsApi.upload(task.id, editCommentAttachment);
+                if (uploadRes?.data?.data) {
+                    attachmentName = uploadRes.data.data.original_name || editCommentAttachment.name;
+                    attachmentPath = uploadRes.data.data.file_path;
                 }
             }
 
@@ -178,28 +166,16 @@ export default function TaskModal({ task, columnId, boardId, currentUser, onClos
 
             // Upload attachment first if exists
             if (commentAttachment) {
-                const formData = new FormData();
-                formData.append('file', commentAttachment);
-                formData.append('task_id', task.id);
+                const uploadRes = await attachmentsApi.upload(task.id, commentAttachment);
+                console.log('Upload response:', uploadRes.data);
 
-                const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api/attachments/upload.php`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    },
-                    body: formData
-                });
-
-                const uploadData = await uploadRes.json();
-                console.log('Upload response:', uploadData);
-
-                if (uploadRes.ok && uploadData.data) {
+                if (uploadRes?.data?.data) {
                     // Match field names from upload.php response
-                    attachmentName = uploadData.data.original_name || commentAttachment.name;
-                    attachmentPath = uploadData.data.file_path;
+                    attachmentName = uploadRes.data.data.original_name || commentAttachment.name;
+                    attachmentPath = uploadRes.data.data.file_path;
                     console.log('Attachment saved:', { attachmentName, attachmentPath });
                 } else {
-                    console.error('Upload failed:', uploadData);
+                    console.error('Upload failed:', uploadRes.data);
                 }
             }
 
@@ -780,7 +756,6 @@ export default function TaskModal({ task, columnId, boardId, currentUser, onClos
                                             <div className="space-y-4 mb-4">
                                                 {attachments.map((attachment) => {
                                                     const isImage = attachment.file_type?.startsWith('image/') || attachment.mime_type?.startsWith('image/');
-                                                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend';
                                                     const fileUrl = `${API_URL}/${attachment.file_path}`;
                                                     const timeAgo = getTimeAgo(attachment.created_at);
 
@@ -1145,7 +1120,7 @@ export default function TaskModal({ task, columnId, boardId, currentUser, onClos
                                                                 />
                                                                 {comment.attachment_name && comment.attachment_path && (
                                                                     <a
-                                                                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/${comment.attachment_path}`}
+                                                                        href={`${API_URL}/${comment.attachment_path}`}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
                                                                         className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-surface hover:bg-surface-light rounded-lg text-xs text-white transition-colors"

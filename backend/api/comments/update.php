@@ -49,6 +49,14 @@ try {
     $attachmentName = $input['attachment_name'] ?? null;
     $attachmentPath = $input['attachment_path'] ?? null;
     
+    // Delete old attachment if it was replaced or removed
+    if (!empty($comment['attachment_path']) && $comment['attachment_path'] !== $attachmentPath) {
+        $oldFile = __DIR__ . '/../../' . $comment['attachment_path'];
+        if (file_exists($oldFile)) {
+            unlink($oldFile);
+        }
+    }
+    
     $stmt = $db->prepare("
         UPDATE comments 
         SET content = ?, attachment_name = ?, attachment_path = ?, updated_at = NOW()

@@ -218,11 +218,9 @@ function ProjectModal({ project, onClose }) {
     useEffect(() => {
         if (project?.id) {
             setLoadingMembers(true);
-            fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api/projects/show.php?id=${project.id}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
-            })
-                .then(res => res.json())
-                .then(data => {
+            projectsApi.getById(project.id)
+                .then(res => {
+                    const data = res.data;
                     if (data?.data?.members) {
                         const memberIds = data.data.members
                             .filter(m => m.project_role !== 'owner')

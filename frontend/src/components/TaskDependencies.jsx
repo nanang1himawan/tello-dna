@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api`;
+import { API_URL } from '../lib/api';
+const API_BASE = `${API_URL}/api`;
 
 const typeEmojis = {
     epic: '⚡',

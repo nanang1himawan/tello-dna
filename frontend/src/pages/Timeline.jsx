@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { projectsApi, tasksApi } from '../lib/api';
+import { projectsApi, tasksApi, API_URL } from '../lib/api';
 import {
     ArrowLeft,
     Calendar as CalendarIcon,
@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { cn, formatDate } from '../lib/utils';
 
-const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api`;
+const API_BASE = `${API_URL}/api`;
 
 export default function Timeline() {
     const { projectId } = useParams();

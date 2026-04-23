@@ -43,6 +43,7 @@ try {
     $stmt = $db->prepare("SELECT id FROM projects WHERE id = ?");
     $stmt->execute([$projectId]);
     if (!$stmt->fetch()) {
+        $db->rollBack();
         Response::notFound('Project not found');
     }
     

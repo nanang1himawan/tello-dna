@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { boardsApi, tasksApi, usersApi } from '../lib/api';
+import { boardsApi, tasksApi, usersApi, projectsApi } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import TaskModal from '../components/TaskModal';
 import BoardSettingsModal from '../components/BoardSettingsModal';
@@ -41,9 +41,10 @@ export default function Board() {
 
     const { data: projectData } = useQuery({
         queryKey: ['project', projectId],
-        queryFn: () => fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api/projects/show.php?id=${projectId}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
-        }).then(res => res.json()),
+        queryFn: async () => {
+            const res = await projectsApi.getById(projectId);
+            return res.data;
+        },
         enabled: !!projectId && !boardId,
     });
 
@@ -59,8 +60,38 @@ export default function Board() {
 
     const moveMutation = useMutation({
         mutationFn: ({ taskId, columnId, position }) => tasksApi.move(taskId, { column_id: columnId, position }),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['board', actualBoardId]);
+        onMutate: async ({ taskId, columnId, position }) => {
+            await queryClient.cancelQueries({ queryKey: ['board', actualBoardId] });
+            const previousBoard = queryClient.getQueryData(['board', actualBoardId]);
+            
+            queryClient.setQueryData(['board', actualBoardId], old => {
+                if (!old) return old;
+                const newBoard = JSON.parse(JSON.stringify(old));
+                let taskToMove = null;
+                for (const col of newBoard.data.data.columns) {
+                    const taskIndex = col.tasks.findIndex(t => t.id == taskId);
+                    if (taskIndex !== -1) {
+                        taskToMove = col.tasks.splice(taskIndex, 1)[0];
+                        break;
+                    }
+                }
+                if (taskToMove) {
+                    const targetCol = newBoard.data.data.columns.find(c => c.id == columnId);
+                    if (targetCol) {
+                        targetCol.tasks.splice(position, 0, taskToMove);
+                    }
+                }
+                return newBoard;
+            });
+            
+            return { previousBoard };
+        },
+        onError: (err, variables, context) => {
+            queryClient.setQueryData(['board', actualBoardId], context.previousBoard);
+            console.error('Failed to move task:', err);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['board', actualBoardId] });
         },
     });
 

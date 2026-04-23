@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import {
     Users,
@@ -22,21 +23,17 @@ export default function Workload() {
     const [selectedProject, setSelectedProject] = useState('');
 
     // Build query params
-    const buildUrl = () => {
-        const base = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api/users/workload.php`;
-        const params = new URLSearchParams();
-        if (selectedUser) params.set('user_id', selectedUser);
-        if (selectedProject) params.set('project_id', selectedProject);
-        const qs = params.toString();
-        return qs ? `${base}?${qs}` : base;
+    const getParams = () => {
+        const params = {};
+        if (selectedUser) params.user_id = selectedUser;
+        if (selectedProject) params.project_id = selectedProject;
+        return params;
     };
 
     // Fetch workload data
     const { data, isLoading, error } = useQuery({
         queryKey: ['workload', selectedUser, selectedProject],
-        queryFn: () => fetch(buildUrl(), {
-            headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
-        }).then(res => res.json()),
+        queryFn: () => api.get('/api/users/workload.php', { params: getParams() }).then(res => res.data),
         enabled: currentUser?.role === 'admin' || currentUser?.role === 'manager',
     });
 

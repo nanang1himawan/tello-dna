@@ -36,6 +36,14 @@ try {
         Response::forbidden('You can only delete your own comments');
     }
     
+    // Delete attachment file if exists
+    if (!empty($comment['attachment_path'])) {
+        $filepath = __DIR__ . '/../../' . $comment['attachment_path'];
+        if (file_exists($filepath)) {
+            unlink($filepath);
+        }
+    }
+    
     $stmt = $db->prepare("DELETE FROM comments WHERE id = ?");
     $stmt->execute([$id]);
 

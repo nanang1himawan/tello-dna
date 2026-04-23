@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { cn, formatDate, getInitials, getSeverityColor } from '../lib/utils';
 
-const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/project-gemini/project-03/backend'}/api`;
+import { API_URL } from '../lib/api';
+const API_BASE = `${API_URL}/api`;
 
 const typeConfig = {
     epic: { emoji: '⚡', color: 'bg-purple-500/20 text-purple-400', label: 'Epic' },

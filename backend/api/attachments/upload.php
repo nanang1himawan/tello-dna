@@ -36,21 +36,28 @@ if ($file['size'] > $maxSize) {
     Response::error('File too large. Max 10MB allowed.', 400);
 }
 
-// Allowed file types
-$allowedTypes = [
-    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-    'application/pdf',
-    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain', 'text/csv',
-    'application/zip', 'application/x-rar-compressed'
+// Allowed file types mapping
+$mimeToExt = [
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/gif' => 'gif',
+    'image/webp' => 'webp',
+    'application/pdf' => 'pdf',
+    'application/msword' => 'doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+    'application/vnd.ms-excel' => 'xls',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+    'text/plain' => 'txt',
+    'text/csv' => 'csv',
+    'application/zip' => 'zip',
+    'application/x-rar-compressed' => 'rar'
 ];
 
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mimeType = finfo_file($finfo, $file['tmp_name']);
 finfo_close($finfo);
 
-if (!in_array($mimeType, $allowedTypes)) {
+if (!array_key_exists($mimeType, $mimeToExt)) {
     Response::error('File type not allowed', 400);
 }
 
@@ -70,8 +77,15 @@ try {
         mkdir($uploadDir, 0755, true);
     }
     
-    // Generate unique filename
-    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    // Secure the directory from PHP execution
+    $rootUploadDir = __DIR__ . '/../../uploads';
+    if (!file_exists($rootUploadDir . '/.htaccess')) {
+        if (!is_dir($rootUploadDir)) mkdir($rootUploadDir, 0755, true);
+        file_put_contents($rootUploadDir . '/.htaccess', "<FilesMatch \"\.(php|php\.|\phtml|pht|php3|php4|php5|php7|php8|phar|shtml|cgi|pl|py|exe)\$\">\n    Require all denied\n</FilesMatch>\nphp_flag engine off\nOptions -ExecCGI");
+    }
+    
+    // Generate unique filename securely using mapped extension
+    $extension = $mimeToExt[$mimeType];
     $filename = uniqid() . '_' . time() . '.' . $extension;
     $filepath = $uploadDir . '/' . $filename;
     $relativePath = 'uploads/attachments/' . date('Y/m') . '/' . $filename;

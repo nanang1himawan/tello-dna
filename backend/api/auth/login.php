@@ -28,8 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Get JSON body
 $input = json_decode(file_get_contents('php://input'), true);
 
+// Artificial delay to mitigate timing attacks and basic brute force
+usleep(500000); // 500ms
+
 // Validate input
-if (empty($input['email']) || empty($input['password'])) {
+if (!isset($input['email']) || !isset($input['password']) || trim($input['email']) === '' || $input['password'] === '') {
     Response::error('Email and password are required', 400);
 }
 

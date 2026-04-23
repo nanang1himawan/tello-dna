@@ -18,11 +18,11 @@ Auth::verify();
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-if (empty($input['column_id'])) {
+if (!isset($input['column_id']) || $input['column_id'] === '') {
     Response::error('Column ID is required', 400);
 }
 
-if (empty($input['title'])) {
+if (!isset($input['title']) || trim($input['title']) === '') {
     Response::error('Task title is required', 400);
 }
 
@@ -56,12 +56,16 @@ $statusActual = max(0, min(100, (int)$statusActual));
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Verify column exists
-    $stmt = $db->prepare("SELECT id FROM columns WHERE id = ?");
-    $stmt->execute([$columnId]);
-    if (!$stmt->fetch()) {
-        Response::notFound('Column not found');
-    }
+    $db->beginTransaction();
+    
+    try {
+        // Verify column exists
+        $stmt = $db->prepare("SELECT id FROM columns WHERE id = ?");
+        $stmt->execute([$columnId]);
+        if (!$stmt->fetch()) {
+            $db->rollBack();
+            Response::notFound('Column not found');
+        }
     
     // Get next position
     $stmt = $db->prepare("SELECT COALESCE(MAX(position), -1) + 1 as next_pos FROM tasks WHERE column_id = ?");
@@ -103,8 +107,16 @@ try {
     require_once __DIR__ . '/../../helpers/activity.php';
     ActivityLogger::logCreated($taskId, Auth::$user['id'], $title);
 
-    Response::created($task, 'Task created successfully');
+        $db->commit();
+        Response::created($task, 'Task created successfully');
+
+    } catch (Exception $e) {
+        $db->rollBack();
+        throw $e;
+    }
 
 } catch (PDOException $e) {
     Response::error('Database error: ' . $e->getMessage(), 500);
+} catch (Exception $e) {
+    Response::error('Error: ' . $e->getMessage(), 500);
 }
