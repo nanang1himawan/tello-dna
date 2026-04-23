@@ -4,7 +4,7 @@
  * Using HMAC-SHA256 for token signing
  */
 
-define('JWT_SECRET', 'office_app_secret_key_change_in_production_2024');
+define('JWT_SECRET', getenv('JWT_SECRET') ?: 'CHANGE_ME_IN_PRODUCTION_' . hash('sha256', __DIR__));
 define('JWT_EXPIRY', 3600 * 24); // 24 hours
 define('JWT_REFRESH_EXPIRY', 3600 * 24 * 7); // 7 days
 

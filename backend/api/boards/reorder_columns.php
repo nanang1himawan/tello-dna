@@ -81,5 +81,6 @@ try {
     if ($db->inTransaction()) {
         $db->rollBack();
     }
-    Response::error('Database error: ' . $e->getMessage(), 500);
+    error_log($e->getMessage());
+    Response::error('Database error', 500);
 }

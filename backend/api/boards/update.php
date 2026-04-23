@@ -80,5 +80,6 @@ try {
     Response::success($updatedBoard, 'Board updated successfully');
 
 } catch (PDOException $e) {
-    Response::error('Database error: ' . $e->getMessage(), 500);
+    error_log($e->getMessage());
+    Response::error('Database error', 500);
 }

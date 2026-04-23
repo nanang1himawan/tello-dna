@@ -36,6 +36,7 @@ try {
     $board = $stmt->fetch();
 
     if (!$board) {
+        $db->rollBack();
         Response::notFound('Board not found');
     }
 
@@ -118,5 +119,5 @@ try {
 
 } catch (PDOException $e) {
     $db->rollBack();
-    Response::error('Database error: ' . $e->getMessage(), 500);
+    Response::error('Database error', 500);
 }

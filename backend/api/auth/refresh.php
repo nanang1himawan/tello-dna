@@ -49,7 +49,8 @@ try {
     $newAccessToken = JWT::encode([
         'user_id' => $user['id'],
         'email' => $user['email'],
-        'role' => $user['role']
+        'role' => $user['role'],
+        'session_token' => $user['session_token']
     ]);
 
     $newRefreshToken = JWT::encodeRefresh([

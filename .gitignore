@@ -1,5 +1,10 @@
 # ===== OS Generated Files =====
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 Desktop.ini
 
@@ -11,28 +16,57 @@ Desktop.ini
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
+.project
+.settings/
+.classpath
+.factorypath
 
-# ===== Frontend (Node/Vite) =====
-frontend/node_modules/
-frontend/dist/
-frontend/dist-ssr/
+# ===== Environment / Secrets (CRITICAL) =====
+.env
+.env.local
+.env.*.local
+*.env
+backend/.env
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
-*.local
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
+!backend/.env.example
+
+# ===== Frontend (Node/Vite) =====
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/pnpm-lock.yaml
+.npm/
+.eslintcache
 
 # ===== Backend (PHP) =====
-backend/config/database.php
+# Do NOT ignore database.php now that credentials are in .env
+# backend/config/database.php 
+backend/vendor/
+backend/composer.lock
 backend/uploads/*
 !backend/uploads/.gitkeep
+backend/logs/
+*.log
 
-# ===== General =====
+# ===== General / Temporary =====
 *.tmp
 *.bak
-*.swp
 *.cache
+*.old
+*.orig
+temp/
+tmp/
+.sass-cache/
+connect.lock
+/dist/
+/build/
+
+# ===== Custom =====
+/Ubuntu/ # Just in case

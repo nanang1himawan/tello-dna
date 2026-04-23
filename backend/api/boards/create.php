@@ -103,6 +103,7 @@ try {
     Response::created($newBoard, 'Board created successfully');
 
 } catch (PDOException $e) {
-    $db->rollBack();
-    Response::error('Database error: ' . $e->getMessage(), 500);
+    if (isset($db)) $db->rollBack();
+    error_log($e->getMessage());
+    Response::error('Database error', 500);
 }

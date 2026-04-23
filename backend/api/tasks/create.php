@@ -116,7 +116,9 @@ try {
     }
 
 } catch (PDOException $e) {
-    Response::error('Database error: ' . $e->getMessage(), 500);
+    error_log($e->getMessage());
+    Response::error('Database error', 500);
 } catch (Exception $e) {
-    Response::error('Error: ' . $e->getMessage(), 500);
+    error_log($e->getMessage());
+    Response::error('An unexpected error occurred', 500);
 }

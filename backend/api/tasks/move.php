@@ -23,7 +23,7 @@ Auth::verify();
 
 $input = json_decode(file_get_contents('php://input'), true);
 
-if (empty($input['task_id'])) {
+if (!isset($input['task_id']) || $input['task_id'] === '') {
     Response::error('Task ID is required', 400);
 }
 
@@ -49,6 +49,7 @@ try {
     $task = $stmt->fetch();
     
     if (!$task) {
+        $db->rollBack();
         Response::notFound('Task not found');
     }
     
@@ -156,5 +157,5 @@ try {
 
 } catch (PDOException $e) {
     $db->rollBack();
-    Response::error('Database error: ' . $e->getMessage(), 500);
+    Response::error('Database error', 500);
 }
