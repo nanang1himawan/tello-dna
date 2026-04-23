@@ -184,9 +184,9 @@ export default function Dashboard() {
                         </p>
                     ) : (
                         <div className="space-y-2">
-                            {stats.tasks_by_status?.map((status) => (
+                            {stats.tasks_by_status?.map((status, index) => (
                                 <div
-                                    key={status.column_name}
+                                    key={`${status.column_name}-${index}`}
                                     className="flex items-center justify-between p-2 bg-surface/50 rounded-lg"
                                 >
                                     <span className="text-sm text-white">{status.column_name}</span>

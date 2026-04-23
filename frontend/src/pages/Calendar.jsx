@@ -104,13 +104,13 @@ export default function Calendar() {
     const goToPrev = () => {
         const calendarApi = calendarRef.current?.getApi();
         calendarApi?.prev();
-        setCurrentDate(calendarApi?.getDate());
+        setCurrentDate(calendarApi?.getDate() ?? new Date());
     };
 
     const goToNext = () => {
         const calendarApi = calendarRef.current?.getApi();
         calendarApi?.next();
-        setCurrentDate(calendarApi?.getDate());
+        setCurrentDate(calendarApi?.getDate() ?? new Date());
     };
 
     return (

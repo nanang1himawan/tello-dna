@@ -41,7 +41,7 @@ try {
         JOIN columns c ON t.column_id = c.id
         WHERE t.assignee_id = ? OR t.created_by = ?
         GROUP BY c.name
-        ORDER BY c.position
+        ORDER BY MIN(c.position)
     ");
     $stmt->execute([$userId, $userId]);
     $tasksByStatus = $stmt->fetchAll();

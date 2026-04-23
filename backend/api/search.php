@@ -42,13 +42,13 @@ try {
     
     // Search projects
     $projectStmt = $db->prepare("
-        SELECT id, name, `key`, description
+        SELECT id, name, description
         FROM projects
-        WHERE name LIKE ? OR `key` LIKE ? OR description LIKE ?
+        WHERE name LIKE ? OR description LIKE ?
         ORDER BY name ASC
         LIMIT 5
     ");
-    $projectStmt->execute([$searchTerm, $searchTerm, $searchTerm]);
+    $projectStmt->execute([$searchTerm, $searchTerm]);
     $projects = $projectStmt->fetchAll();
     
     Response::success([
